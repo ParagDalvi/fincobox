@@ -7,8 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fincobox.domain.news.models.NewsData
 import com.example.fincobox.domain.news.usecases.TopHeadlinesUseCase
+import com.example.fincobox.presentation.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,8 +19,8 @@ class NewsViewmodel @Inject constructor(
     private val getTopHeadlinesUseCase: TopHeadlinesUseCase,
 ) : ViewModel() {
 
-    private val _newsState: MutableLiveData<NewsData> = MutableLiveData()
-    val newsState: LiveData<NewsData> = _newsState
+    private val _newsState: MutableLiveData<UiState<NewsData>> = MutableLiveData(UiState.Loading())
+    val newsState: LiveData<UiState<NewsData>> = _newsState
 
     companion object {
         private const val TAG = "NewsViewmodel"
@@ -30,13 +32,9 @@ class NewsViewmodel @Inject constructor(
 
     private fun getTopHeadlines() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val response = getTopHeadlinesUseCase(1, 20)
-                Log.i(TAG, "getTopHeadlines: $response")
-                _newsState.postValue(response)
-            } catch (e: Exception) {
-                Log.e(TAG, "getTopHeadlines: Failed", e)
-            }
+            val response = getTopHeadlinesUseCase(1, 20)
+            Log.i(TAG, "getTopHeadlines: $response")
+            _newsState.postValue(response)
         }
     }
 
