@@ -1,7 +1,12 @@
 package com.example.fincobox.presentation.news.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -13,11 +18,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import coil.compose.AsyncImage
+import com.example.fincobox.R
 import com.example.fincobox.domain.news.models.Article
 import com.example.fincobox.domain.news.models.Source
 import com.example.fincobox.presentation.news.viewmodels.NewsViewmodel
@@ -29,36 +42,19 @@ fun HeadlinesPage(newsViewModel: NewsViewmodel = hiltViewModel()) {
     val hasUserSearched = newsViewModel.hasUserSearched.collectAsState()
 
     LazyColumn(
-        contentPadding = PaddingValues(vertical = 16.dp),
+        contentPadding = PaddingValues(16.dp)
     ) {
         item { SearchBox() }
 
-        if(hasUserSearched.value) {
+        if (hasUserSearched.value) {
             items(
                 count = searchedArticles.itemCount,
             ) { index ->
                 searchedArticles[index]?.let { NewsItem(article = it) }
             }
 
-            when (searchedArticles.loadState.append) {
-                is LoadState.Error -> {
-                    item {
-                        ErrorState(
-                            message = (searchedArticles.loadState.append as LoadState.Error)
-                                .error
-                                .localizedMessage
-                        )
-                    }
-                }
+            item { NonSuccessState(searchedArticles) }
 
-                is LoadState.Loading -> {
-                    item {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is LoadState.NotLoading -> Unit
-            }
         } else {
             items(
                 count = articles.itemCount,
@@ -66,26 +62,27 @@ fun HeadlinesPage(newsViewModel: NewsViewmodel = hiltViewModel()) {
                 articles[index]?.let { NewsItem(article = it) }
             }
 
-            when (articles.loadState.append) {
-                is LoadState.Error -> {
-                    item {
-                        ErrorState(
-                            message = (articles.loadState.append as LoadState.Error)
-                                .error
-                                .localizedMessage
-                        )
-                    }
-                }
-
-                is LoadState.Loading -> {
-                    item {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is LoadState.NotLoading -> Unit
-            }
+            item { NonSuccessState(articles) }
         }
+    }
+}
+
+@Composable
+fun NonSuccessState(articles: LazyPagingItems<*>) {
+    when (articles.loadState.append) {
+        is LoadState.Error -> {
+            ErrorState(
+                message = (articles.loadState.append as LoadState.Error)
+                    .error
+                    .message
+            )
+        }
+
+        is LoadState.Loading -> {
+            CircularProgressIndicator()
+        }
+
+        is LoadState.NotLoading -> Unit
     }
 }
 
@@ -107,8 +104,52 @@ fun SearchBox(newsViewModel: NewsViewmodel = hiltViewModel()) {
 }
 
 @Composable
-fun NewsItem(article: Article) {
-    Text(text = article.title)
+fun NewsItem(article: Article, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .padding(vertical = 16.dp)
+    ) {
+        AsyncImage(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
+            model = article.imageUrl,
+            contentDescription = null,
+            placeholder = painterResource(id = R.drawable.ic_launcher_background),
+            error = painterResource(id = R.drawable.ic_launcher_background),
+            contentScale = ContentScale.Crop,
+        )
+        Column(
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .weight(3f),
+        ) {
+            Text(
+                article.title,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                article.content,
+                fontWeight = FontWeight.Thin,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    article.publishedAt,
+                    fontWeight = FontWeight.Thin,
+                    maxLines = 2
+                )
+                Text("Read more >", color = Color.Yellow)
+            }
+        }
+    }
 }
 
 @Composable
@@ -120,29 +161,40 @@ fun ErrorState(message: String?) {
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun NewsItemPreview() {
-    NewsItem(
-        Article(
-            author = "Someone",
-            content = "Data",
-            description = "More details",
-            imageUrl = "",
-            publishedAt = "22 Jan",
-            source = Source(
-                id = "",
-                name = ""
-            ),
-            title = "Title",
-            url = "google.com"
+    Column {
+        NewsItem(
+            Article(
+                author = "Someone",
+                content = "Data",
+                description = "More details",
+                imageUrl = "",
+                publishedAt = "22 Jan",
+                source = Source(
+                    id = "",
+                    name = ""
+                ),
+                title = "Title",
+                url = "google.com"
+            )
         )
-    )
-}
 
-
-@Preview
-@Composable
-private fun SearchBoxPreview() {
-    SearchBox()
+        NewsItem(
+            Article(
+                author = "Someone",
+                content = "Data",
+                description = "More details",
+                imageUrl = "",
+                publishedAt = "22 Jan",
+                source = Source(
+                    id = "",
+                    name = ""
+                ),
+                title = "Title",
+                url = "google.com"
+            )
+        )
+    }
 }
