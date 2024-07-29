@@ -1,6 +1,8 @@
 package com.example.fincobox.presentation.news.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -33,36 +37,51 @@ import coil.compose.AsyncImage
 import com.example.fincobox.R
 import com.example.fincobox.domain.news.models.Article
 import com.example.fincobox.domain.news.models.Source
+import com.example.fincobox.presentation.navigation.AppRoutes
 import com.example.fincobox.presentation.news.viewmodels.NewsViewmodel
 
 @Composable
-fun HeadlinesPage(newsViewModel: NewsViewmodel = hiltViewModel()) {
+fun HeadlinesPage(
+    navController: NavHostController,
+    newsViewModel: NewsViewmodel = hiltViewModel()
+) {
     val articles = newsViewModel.topArticles.collectAsLazyPagingItems()
     val searchedArticles = newsViewModel.searchedArticles.collectAsLazyPagingItems()
     val hasUserSearched = newsViewModel.hasUserSearched.collectAsState()
 
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp)
-    ) {
-        item { SearchBox() }
+    Scaffold { padding ->
+        LazyColumn(
+            modifier = Modifier.padding(padding),
+            contentPadding = PaddingValues(16.dp)
+        ) {
+            item { SearchBox() }
 
-        if (hasUserSearched.value) {
-            items(
-                count = searchedArticles.itemCount,
-            ) { index ->
-                searchedArticles[index]?.let { NewsItem(article = it) }
+            if (hasUserSearched.value) {
+                items(
+                    count = searchedArticles.itemCount,
+                ) { index ->
+                    searchedArticles[index]?.let {
+                        NewsItem(article = it) {
+                            navController.navigate(AppRoutes.ARTICLE_DETAIL_ROUTE)
+                        }
+                    }
+                }
+
+                item { NonSuccessState(searchedArticles) }
+
+            } else {
+                items(
+                    count = articles.itemCount,
+                ) { index ->
+                    articles[index]?.let {
+                        NewsItem(article = it) {
+                            navController.navigate(AppRoutes.ARTICLE_DETAIL_ROUTE)
+                        }
+                    }
+                }
+
+                item { NonSuccessState(articles) }
             }
-
-            item { NonSuccessState(searchedArticles) }
-
-        } else {
-            items(
-                count = articles.itemCount,
-            ) { index ->
-                articles[index]?.let { NewsItem(article = it) }
-            }
-
-            item { NonSuccessState(articles) }
         }
     }
 }
@@ -104,10 +123,15 @@ fun SearchBox(newsViewModel: NewsViewmodel = hiltViewModel()) {
 }
 
 @Composable
-fun NewsItem(article: Article, modifier: Modifier = Modifier) {
+fun NewsItem(
+    article: Article,
+    modifier: Modifier = Modifier,
+    onTap: (() -> Unit)? = null
+) {
     Row(
         modifier = modifier
             .padding(vertical = 16.dp)
+            .clickable { onTap?.invoke() }
     ) {
         AsyncImage(
             modifier = Modifier
