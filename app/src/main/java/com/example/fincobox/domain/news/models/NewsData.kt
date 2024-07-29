@@ -32,7 +32,7 @@ fun NewsResponseDto.toNewsData(): NewsData {
     )
 }
 
-private fun ArticleDto.toArticle(): Article {
+fun ArticleDto.toArticle(): Article {
     return Article(
         source = this.source?.toSource() ?: Source("", ""),
         author = this.author ?: "",
@@ -45,7 +45,7 @@ private fun ArticleDto.toArticle(): Article {
     )
 }
 
-private fun SourceDto.toSource(): Source {
+fun SourceDto.toSource(): Source {
     return Source(
         id = this.id ?: "",
         name = this.name ?: ""

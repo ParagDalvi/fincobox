@@ -38,10 +38,4 @@ object DependencyModule {
         return NewsRepositoryImpl(api)
     }
 
-    @Provides
-    @Singleton
-    fun provideTopHeadlinesUseCase(repo: NewsRepository): TopHeadlinesUseCase {
-        return TopHeadlinesUseCase(repo)
-    }
-
 }

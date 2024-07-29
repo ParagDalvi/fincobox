@@ -1,25 +1,27 @@
 package com.example.fincobox.presentation.news.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.fincobox.domain.news.models.Article
-import com.example.fincobox.presentation.UiState
+import com.example.fincobox.domain.news.models.Source
 import com.example.fincobox.presentation.news.viewmodels.NewsViewmodel
 
 @Composable
 fun HeadlinesPage(newsViewModel: NewsViewmodel = hiltViewModel()) {
-    val newsState = newsViewModel.newsState.observeAsState().value
+    val articles = newsViewModel.topArticles.collectAsLazyPagingItems()
 
     Column {
         TextField(
@@ -31,21 +33,28 @@ fun HeadlinesPage(newsViewModel: NewsViewmodel = hiltViewModel()) {
                 .padding(8.dp),
             placeholder = { Text("Search News") }
         )
-        when (newsState) {
-            is UiState.Error -> {
-                Text(newsState.data.toString())
+
+        LazyColumn(
+            contentPadding = PaddingValues(vertical = 16.dp),
+        ) {
+            items(
+                count = articles.itemCount,
+            ) { index ->
+                articles[index]?.let { NewsItem(article = it) }
             }
 
-            is UiState.Success -> {
-                LazyColumn {
-                    items(newsState.data.articles) { article ->
-                        NewsItem(article = article)
+            when (articles.loadState.append) {
+                is LoadState.Error -> {
+
+                }
+
+                is LoadState.Loading -> {
+                    item {
+                        CircularProgressIndicator()
                     }
                 }
-            }
 
-            else -> {
-                CircularProgressIndicator()
+                is LoadState.NotLoading -> Unit
             }
         }
     }
@@ -54,4 +63,24 @@ fun HeadlinesPage(newsViewModel: NewsViewmodel = hiltViewModel()) {
 @Composable
 fun NewsItem(article: Article) {
     Text(text = article.title)
+}
+
+@Preview
+@Composable
+private fun NewsItemPreview() {
+    NewsItem(
+        Article(
+            author = "Someone",
+            content = "Data",
+            description = "More details",
+            imageUrl = "",
+            publishedAt = "22 Jan",
+            source = Source(
+                id = "",
+                name = ""
+            ),
+            title = "Title",
+            url = "google.com"
+        )
+    )
 }

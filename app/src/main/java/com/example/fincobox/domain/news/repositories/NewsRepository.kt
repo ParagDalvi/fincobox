@@ -4,5 +4,5 @@ import com.example.fincobox.data.ApiResult
 import com.example.fincobox.data.news.models.NewsResponseDto
 
 interface NewsRepository {
-    suspend fun getTopHeadlines(page: Int, pageSize: Int): ApiResult<NewsResponseDto>
+    suspend fun getTopHeadlines(page: Int, pageSize: Int): NewsResponseDto
 }
