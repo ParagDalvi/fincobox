@@ -2,6 +2,7 @@ package com.example.fincobox.data.news.repositories
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.example.fincobox.data.news.models.NewsType
 import com.example.fincobox.domain.news.models.Article
 import com.example.fincobox.domain.news.models.toArticle
 import com.example.fincobox.domain.news.repositories.NewsRepository
@@ -9,7 +10,8 @@ import java.io.IOException
 import javax.inject.Inject
 
 class NewsPagingSource @Inject constructor(
-    private val repo: NewsRepository
+    private val repo: NewsRepository,
+    private val newsType: NewsType
 ) : PagingSource<Int, Article>() {
 
     companion object {
@@ -31,7 +33,14 @@ class NewsPagingSource @Inject constructor(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Article> {
         val position = params.key ?: NEWS_START_INDEX
         return try {
-            val response = repo.getTopHeadlines(position, ARTICLES_PAGE_SIZE)
+            val response = when (newsType) {
+                is NewsType.Headlines -> repo.getTopHeadlines(position, ARTICLES_PAGE_SIZE)
+                is NewsType.SearchNews -> repo.searchNews(
+                    newsType.query,
+                    position,
+                    ARTICLES_PAGE_SIZE
+                )
+            }
             val articles = response.articles?.mapNotNull { it?.toArticle() } ?: emptyList()
 
             LoadResult.Page(

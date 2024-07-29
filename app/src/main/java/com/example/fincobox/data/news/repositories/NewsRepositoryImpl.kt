@@ -1,6 +1,5 @@
 package com.example.fincobox.data.news.repositories
 
-import com.example.fincobox.BuildConfig
 import com.example.fincobox.data.news.NewsApi
 import com.example.fincobox.data.news.models.NewsResponseDto
 import com.example.fincobox.domain.news.repositories.NewsRepository
@@ -12,7 +11,11 @@ class NewsRepositoryImpl @Inject constructor(
 ) : NewsRepository {
 
     override suspend fun getTopHeadlines(page: Int, pageSize: Int): NewsResponseDto {
-        return newsApi.getTopHeadlines(COUNTRY_CODE, page, pageSize, BuildConfig.NEWS_API_KEY)
+        return newsApi.getTopHeadlines(COUNTRY_CODE, page, pageSize)
+    }
+
+    override suspend fun searchNews(query: String, page: Int, pageSize: Int): NewsResponseDto {
+        return newsApi.searchNews(query, page, pageSize)
     }
 
 }

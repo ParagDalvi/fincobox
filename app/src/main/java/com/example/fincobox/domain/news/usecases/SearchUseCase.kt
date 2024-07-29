@@ -10,10 +10,9 @@ import com.example.fincobox.domain.news.repositories.NewsRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class TopHeadlinesUseCase @Inject constructor(repo: NewsRepository) {
-    private val newsPagingSource = NewsPagingSource(newsType = NewsType.Headlines, repo = repo)
-
-    operator fun invoke(): Flow<PagingData<Article>> {
+class SearchUseCase @Inject constructor(private val repo: NewsRepository) {
+    operator fun invoke(query: String): Flow<PagingData<Article>> {
+        val newsPagingSource = NewsPagingSource(newsType = NewsType.SearchNews(query), repo = repo)
         return Pager(PagingConfig(NewsPagingSource.ARTICLES_PAGE_SIZE)) { newsPagingSource }.flow
     }
 }
